@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
-
+using System.Collections;
+using System.Collections.Generic;
 public class Tile_Manager : MonoBehaviour
 {
     [SerializeField] public GameObject tiles;
@@ -9,11 +10,12 @@ public class Tile_Manager : MonoBehaviour
     private Node[,] nodes;
     public LayerMask ortoplanelayermask;
     private Plane plane;
-    public Transform cube;
+    private Transform cube;
     public Transform onMouseprefab;
     public GameObject cube_placement;
     private Vector3 mousePosition;
     public Vector3 tilemouseposition;
+    public int highest_block_value = 5;
     private Vector2[,] arrayyy =
     {
         {new Vector2(4,0),new Vector2(3,0),new Vector2(2,0),new Vector2(1,0),new Vector2(0,0)},
@@ -23,6 +25,7 @@ public class Tile_Manager : MonoBehaviour
         {new Vector2(4,-4),new Vector2(3,-4),new Vector2(2,-4),new Vector2(1,-4),new Vector2(0,-4)}
     };
 
+    public FollowMouse followMouse;
     public float xoffset;
     public float yoffset;
     private Vector2 returnindex(Vector2 tile_index)
@@ -34,6 +37,7 @@ public class Tile_Manager : MonoBehaviour
         return arrayyy[(int)(tile_index.x), (int)(tile_index.y)];
     }
 
+    public BlockRandomizer blockRandomizer;
     void getMousePositionOnGrid()
     {
         if (Input.GetButtonDown("Fire1") || Input.GetButton("Fire1"))
@@ -54,10 +58,7 @@ public class Tile_Manager : MonoBehaviour
                     Vector2 cell_index = new Vector2(node.cellposition.x, node.cellposition.y);
 
                     Vector2 tile_index = returnindex(cell_index);
-                    // Debug.Log(tilemouseposition);
-                    //  Debug.Log(cell_index);
-                    //Debug.Log(tile_index);
-
+                    
                     if (tile_index.x == -1 && tile_index.y == -1)
                     {
                         break;
@@ -69,9 +70,9 @@ public class Tile_Manager : MonoBehaviour
                         {
                             node.block_level = 1;
                            // Debug.Log("up");
-                            match_checker(node);
+                           // match_checker(node);
+                            BFS(node);
                             node.isplaceable = false;
-                            onMouseprefab.GetComponent<FollowMouse>().IsOnGrid = true;
                             onMouseprefab.position = new Vector3(tile_index.x + xoffset, 0.84f, tile_index.y + yoffset);
                             onMouseprefab = null;
 
@@ -83,7 +84,96 @@ public class Tile_Manager : MonoBehaviour
 
 
     }
+    void BFS(Node node)
+    {
+        Queue<Node> Q = new Queue<Node>();
+        List<Node> markedNodes = new List<Node>();
+        node.parent.x = -1;
+        node.parent.y = -1;
+        Q.Enqueue(node);
+        markedNodes.Add(node);
+        
+        int time = 0;
+        Node current = null;
+        int n = 0;
 
+        while (!(Q.Count == 0))
+        {
+            current = Q.Dequeue();
+            current.obj.GetComponent<Renderer>().material.color = Color.red;
+            current.discTime = time;
+            Debug.Log(current.x + " and " + current.y);
+            current.traversed = true;
+
+            if (current.y > 0)
+            {
+                if (nodes[current.x, current.y - 1].block_level == nodes[current.x, current.y].block_level) //left
+                {
+                    if (!nodes[current.x, current.y - 1].traversed)
+                    {
+                        nodes[current.x, current.y - 1].parent.x = current.x;
+                        nodes[current.x, current.y - 1].parent.y = current.y;
+
+                        markedNodes.Add(nodes[current.x, current.y - 1]);
+                        Q.Enqueue(nodes[current.x, current.y - 1]);
+                    }
+                }
+            }
+
+            if (current.y < 4)
+            {
+                if (nodes[current.x, current.y + 1].block_level == nodes[current.x, current.y].block_level) //right
+                {
+                    if (!nodes[current.x, current.y + 1].traversed)
+                    {
+                        nodes[current.x, current.y + 1].parent.x = current.x;
+                        nodes[current.x, current.y + 1].parent.y = current.y;
+
+                        markedNodes.Add(nodes[current.x, current.y + 1]);
+                        Q.Enqueue(nodes[current.x, current.y + 1]);
+                    }
+                }
+            }
+
+            if (current.x < 4)
+            {
+                if (nodes[current.x + 1, current.y].block_level == nodes[current.x, current.y].block_level) //bottom
+                {
+                    if (!nodes[current.x + 1, current.y].traversed)
+                    {
+                        nodes[current.x + 1, current.y].parent.x = current.x;
+                        nodes[current.x + 1, current.y].parent.y = current.y;
+
+                        markedNodes.Add(nodes[current.x + 1, current.y]);
+                        Q.Enqueue(nodes[current.x + 1, current.y]);
+                    }
+                }
+            }
+
+            if (current.x > 0)
+            {
+                if (nodes[current.x - 1, current.y].block_level == nodes[current.x, current.y].block_level) //top
+                {
+                    if (!nodes[current.x - 1, current.y].traversed)
+                    {
+                        nodes[current.x - 1, current.y].parent.x = current.x;
+                        nodes[current.x - 1, current.y].parent.y = current.y;
+
+                        markedNodes.Add(nodes[current.x - 1, current.y]);
+                        Q.Enqueue(nodes[current.x - 1, current.y]);
+                    }
+                }
+            }
+            time++;
+            n++;
+        }
+        for (int i = 0; i < markedNodes.Count; i++)
+        {
+            markedNodes[i].traversed = false;
+        }
+        //Debug.Log(n);
+    }
+    
     bool match_checker(Node block)
     {
         int n = check_match(block, 1);
@@ -129,26 +219,31 @@ public class Tile_Manager : MonoBehaviour
         }
         return n;
     }
-
-
-
-
-
+    
     private void Start()
     {
+        if (blockRandomizer == null)
+        {
+            blockRandomizer = FindObjectOfType<BlockRandomizer>();
+        }
+        Debug.Log(blockRandomizer.blocks[0].block_level);
         createGrid();
         plane = new Plane(Vector3.up, transform.position);
-
+        
     }
 
     private void Update()
     {
         if (!onMouseprefab)
         {
-            onMouseprefab = Instantiate(cube, cube_placement.transform.position, Quaternion.identity);
+            block_node nextBlock = blockRandomizer.GetNextBlock();
+            
+            GameObject nextBlockObject = nextBlock.block;
+           // cube = nextBlockObject.transform;
+            onMouseprefab = Instantiate(nextBlockObject.transform, cube_placement.transform.position, Quaternion.identity);
         }
         getMousePositionOnGrid();
-        if (onMouseprefab && !onMouseprefab.GetComponent<FollowMouse>().IsOnGrid)
+        if (onMouseprefab)
         {
             onMouseprefab.position = cube_placement.transform.position;
         }
@@ -213,6 +308,8 @@ public class Node                     //class for each block
 {
     public bool isplaceable;
     public Vector3 cellposition;
+    public Vector2Int parent;
+    public int discTime;
     public Transform obj;
     public bool traversed;
     public int block_level;
