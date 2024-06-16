@@ -82,7 +82,7 @@ public class Tile_Manager : MonoBehaviour
 
 
     }
-    void BFS(Node node)
+    int BFS(Node node)
     {
         Queue<Node> Q = new Queue<Node>();
         List<Node> markedNodes = new List<Node>();
@@ -110,7 +110,8 @@ public class Tile_Manager : MonoBehaviour
                     {
                         nodes[current.x, current.y - 1].parent.x = current.x;
                         nodes[current.x, current.y - 1].parent.y = current.y;
-
+                        Debug.Log(nodes[current.x, current.y - 1].parent.x);
+                        Debug.Log(nodes[current.x, current.y - 1].parent.y);
                         markedNodes.Add(nodes[current.x, current.y - 1]);
                         Q.Enqueue(nodes[current.x, current.y - 1]);
                     }
@@ -164,58 +165,27 @@ public class Tile_Manager : MonoBehaviour
             time++;
             n++;
         }
+         Debug.Log(current.parent);
         for (int i = 0; i < markedNodes.Count; i++)
         {
             markedNodes[i].traversed = false;
         }
+        return UniqueNodeCounter.CountUniqueNodes(markedNodes);
     }
-    
-    bool match_checker(Node block)
+    public class UniqueNodeCounter
     {
-        int n = check_match(block, 1);
-        Debug.Log("N value: " + n);
-        foreach (var node in nodes)
+        public static int CountUniqueNodes(List<Node> markedNodes)
         {
-            node.traversed = false;
-        }
-        return n > 3;
-    }
+            HashSet<(int, int)> uniqueCoordinates = new HashSet<(int, int)>();
 
-    int check_match(Node block, int n)
-    {
-        block.traversed = true;
-        if (block.x < 4 && nodes[block.x + 1, block.y].traversed == false &&
-            block.block_level == nodes[block.x + 1, block.y].block_level) //right
-        {Debug.Log("right");
-           // Debug.Log(n);
-            check_match(nodes[block.x + 1, block.y], n + 1);
-            
-        }
-        if (block.x > 0 && nodes[block.x - 1, block.y].traversed == false && block.block_level == nodes[block.x - 1, block.y].block_level) //left
-        {
-            Debug.Log("left");
-          //  Debug.Log(n);
-            check_match(nodes[block.x - 1, block.y], n + 1);
-        }
-        
-        if (block.y < 4 && nodes[block.x, block.y + 1].traversed == false &&
-            block.block_level == nodes[block.x, block.y + 1].block_level) //up
-        { Debug.Log("down");
-          //  Debug.Log(n);
-            check_match(nodes[block.x, block.y + 1], n + 1);
-           
-        }
+            foreach (Node node in markedNodes)
+            {
+                uniqueCoordinates.Add((node.x, node.y));
+            }
 
-        if (block.y > 0 && nodes[block.x, block.y - 1].traversed == false &&
-            block.block_level == nodes[block.x, block.y - 1].block_level) //down
-        {Debug.Log("up");
-           // Debug.Log(n);
-            check_match(nodes[block.x, block.y - 1], n + 1);
-            
+            return uniqueCoordinates.Count;
         }
-        return n;
     }
-    
     private void Start()
     {
         if (blockRandomizer == null)
