@@ -51,8 +51,6 @@ public class BlockRandomizer : MonoBehaviour
     {
         float total = 0;
         float randomValue = UnityEngine.Random.value;
-        Debug.Log("Random Value: " + randomValue);
-
         for (int i = 0; i < adjustedProbabilities.Length; i++)
         {
             total += adjustedProbabilities[i];

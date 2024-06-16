@@ -16,14 +16,16 @@ public class Tile_Manager : MonoBehaviour
     private Vector3 mousePosition;
     public Vector3 tilemouseposition;
     public int highest_block_value = 5;
+
     private Vector2[,] arrayyy =
     {
-        {new Vector2(4,0),new Vector2(3,0),new Vector2(2,0),new Vector2(1,0),new Vector2(0,0)},
-        {new Vector2(4,-1),new Vector2(3,-1),new Vector2(2,-1),new Vector2(1,-1),new Vector2(0,-1)},
-        {new Vector2(4,-2),new Vector2(3,-2),new Vector2(2,-2),new Vector2(1,-2),new Vector2(0,-2)},
-        {new Vector2(4,-3),new Vector2(3,-3),new Vector2(2,-3),new Vector2(1,-3),new Vector2(0,-3)},
-        {new Vector2(4,-4),new Vector2(3,-4),new Vector2(2,-4),new Vector2(1,-4),new Vector2(0,-4)}
+        { new Vector2(0, -4), new Vector2(0, -3), new Vector2(0, -2), new Vector2(0, -1), new Vector2(0, 0) },
+        { new Vector2(1, -4), new Vector2(1, -3), new Vector2(1, -2), new Vector2(1, -1), new Vector2(1, 0) },
+        { new Vector2(2, -4), new Vector2(2, -3), new Vector2(2, -2), new Vector2(2, -1), new Vector2(2, 0) },
+        { new Vector2(3, -4), new Vector2(3, -3), new Vector2(3, -2), new Vector2(3, -1), new Vector2(3, 0) },
+        { new Vector2(4, -4), new Vector2(4, -3), new Vector2(4, -2), new Vector2(4, -1), new Vector2(4, 0) }
     };
+
 
     public FollowMouse followMouse;
     public float xoffset;
@@ -52,11 +54,10 @@ public class Tile_Manager : MonoBehaviour
                 tilemouseposition.x = Mathf.RoundToInt(tilemouseposition.x);
                 tilemouseposition.y = Mathf.RoundToInt(tilemouseposition.y);
                 tilemouseposition.z = Mathf.RoundToInt(tilemouseposition.z);
-
                 foreach (var node in nodes)
                 {
                     Vector2 cell_index = new Vector2(node.cellposition.x, node.cellposition.y);
-
+                    
                     Vector2 tile_index = returnindex(cell_index);
                     
                     if (tile_index.x == -1 && tile_index.y == -1)
@@ -64,18 +65,15 @@ public class Tile_Manager : MonoBehaviour
                         break;
                     }
                     else if (tilemouseposition.x == tile_index.x && tilemouseposition.z == tile_index.y && node.isplaceable)
-                    {
-                        // Debug.Log("match");
+                    {   
                         if (onMouseprefab)
                         {
                             node.block_level = 1;
-                           // Debug.Log("up");
-                           // match_checker(node);
                             BFS(node);
                             node.isplaceable = false;
                             onMouseprefab.position = new Vector3(tile_index.x + xoffset, 0.84f, tile_index.y + yoffset);
                             onMouseprefab = null;
-
+                            break;
                         }
                     }
                 }
@@ -102,7 +100,6 @@ public class Tile_Manager : MonoBehaviour
             current = Q.Dequeue();
             current.obj.GetComponent<Renderer>().material.color = Color.red;
             current.discTime = time;
-            Debug.Log(current.x + " and " + current.y);
             current.traversed = true;
 
             if (current.y > 0)
@@ -171,7 +168,6 @@ public class Tile_Manager : MonoBehaviour
         {
             markedNodes[i].traversed = false;
         }
-        //Debug.Log(n);
     }
     
     bool match_checker(Node block)
@@ -226,7 +222,7 @@ public class Tile_Manager : MonoBehaviour
         {
             blockRandomizer = FindObjectOfType<BlockRandomizer>();
         }
-        Debug.Log(blockRandomizer.blocks[0].block_level);
+//        Debug.Log(blockRandomizer.blocks[0].block_level);
         createGrid();
         plane = new Plane(Vector3.up, transform.position);
         
