@@ -16,7 +16,8 @@ public class Tile_Manager : MonoBehaviour
     private Vector3 mousePosition;
     public Vector3 tilemouseposition;
     public int highest_block_value = 5;
-
+    public bool onGrid = false;
+    public Swiping swiping;
     private Vector2[,] arrayyy =
     {
         { new Vector2(0, -4), new Vector2(0, -3), new Vector2(0, -2), new Vector2(0, -1), new Vector2(0, 0) },
@@ -50,33 +51,43 @@ public class Tile_Manager : MonoBehaviour
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, float.MaxValue, ortoplanelayermask))
             {
-                tilemouseposition = hit.transform.position;
-                tilemouseposition.x = Mathf.RoundToInt(tilemouseposition.x);
-                tilemouseposition.y = Mathf.RoundToInt(tilemouseposition.y);
-                tilemouseposition.z = Mathf.RoundToInt(tilemouseposition.z);
-                foreach (var node in nodes)
+                onGrid = true;
+                Debug.Log("onGrid: true");
+                if (!swiping.isSwiping)
                 {
-                    Vector2 cell_index = new Vector2(node.cellposition.x, node.cellposition.y);
-                    
-                    Vector2 tile_index = returnindex(cell_index);
-                    
-                    if (tile_index.x == -1 && tile_index.y == -1)
+                    tilemouseposition = hit.transform.position;
+                    tilemouseposition.x = Mathf.RoundToInt(tilemouseposition.x);
+                    tilemouseposition.y = Mathf.RoundToInt(tilemouseposition.y);
+                    tilemouseposition.z = Mathf.RoundToInt(tilemouseposition.z);
+                    foreach (var node in nodes)
                     {
-                        break;
-                    }
-                    else if (tilemouseposition.x == tile_index.x && tilemouseposition.z == tile_index.y && node.isplaceable)
-                    {   
-                        if (onMouseprefab)
+                        Vector2 cell_index = new Vector2(node.cellposition.x, node.cellposition.y);
+
+                        Vector2 tile_index = returnindex(cell_index);
+
+                        if (tile_index.x == -1 && tile_index.y == -1)
                         {
-                            node.block_level = 1;
-                            BFS(node);
-                            node.isplaceable = false;
-                            onMouseprefab.position = new Vector3(tile_index.x + xoffset, 0.84f, tile_index.y + yoffset);
-                            onMouseprefab = null;
                             break;
+                        }
+                        else if (tilemouseposition.x == tile_index.x && tilemouseposition.z == tile_index.y && node.isplaceable)
+                        {
+                            if (onMouseprefab)
+                            {
+                                node.block_level = 1;
+                                BFS(node);
+                                node.isplaceable = false;
+                                onMouseprefab.position = new Vector3(tile_index.x + xoffset, 0.84f, tile_index.y + yoffset);
+                                onMouseprefab = null;
+                                break;
+                            }
                         }
                     }
                 }
+            }
+            else
+            {
+                onGrid = false;
+                Debug.Log("onGrid: false");
             }
         }
 
@@ -90,7 +101,7 @@ public class Tile_Manager : MonoBehaviour
         node.parent.y = -1;
         Q.Enqueue(node);
         markedNodes.Add(node);
-        
+
         int time = 0;
         Node current = null;
         int n = 0;
@@ -110,8 +121,6 @@ public class Tile_Manager : MonoBehaviour
                     {
                         nodes[current.x, current.y - 1].parent.x = current.x;
                         nodes[current.x, current.y - 1].parent.y = current.y;
-                        Debug.Log(nodes[current.x, current.y - 1].parent.x);
-                        Debug.Log(nodes[current.x, current.y - 1].parent.y);
                         markedNodes.Add(nodes[current.x, current.y - 1]);
                         Q.Enqueue(nodes[current.x, current.y - 1]);
                     }
@@ -165,7 +174,6 @@ public class Tile_Manager : MonoBehaviour
             time++;
             n++;
         }
-         Debug.Log(current.parent);
         for (int i = 0; i < markedNodes.Count; i++)
         {
             markedNodes[i].traversed = false;
@@ -192,10 +200,10 @@ public class Tile_Manager : MonoBehaviour
         {
             blockRandomizer = FindObjectOfType<BlockRandomizer>();
         }
-//        Debug.Log(blockRandomizer.blocks[0].block_level);
+        //        Debug.Log(blockRandomizer.blocks[0].block_level);
         createGrid();
         plane = new Plane(Vector3.up, transform.position);
-        
+
     }
 
     private void Update()
@@ -203,9 +211,9 @@ public class Tile_Manager : MonoBehaviour
         if (!onMouseprefab)
         {
             block_node nextBlock = blockRandomizer.GetNextBlock();
-            
+
             GameObject nextBlockObject = nextBlock.block;
-           // cube = nextBlockObject.transform;
+            // cube = nextBlockObject.transform;
             onMouseprefab = Instantiate(nextBlockObject.transform, cube_placement.transform.position, Quaternion.identity);
         }
         getMousePositionOnGrid();
@@ -227,7 +235,7 @@ public class Tile_Manager : MonoBehaviour
                 spawned_tile.name = "Tile " + x + " " + y;
 
                 var isoffset = (x % 2 == 0 && y % 2 != 0) || (x % 2 != 0 && y % 2 == 0);
-                nodes[x, y] = new Node(true, worldposition, spawned_tile.transform,x,y);
+                nodes[x, y] = new Node(true, worldposition, spawned_tile.transform, x, y);
 
 
                 if (x % 2 == 1)
@@ -262,7 +270,7 @@ public class Tile_Manager : MonoBehaviour
                 {
                     spawned_tile.GetComponent<Renderer>().material.color = Color.blue;
                 }
-                
+
             }
         }
 
@@ -281,10 +289,10 @@ public class Node                     //class for each block
     public int block_level;
     public int x;
     public int y;
-    public Node(bool _isplaceable, Vector3 _cellposition, Transform _obj, int xn = 0,int yn=0)
+    public Node(bool _isplaceable, Vector3 _cellposition, Transform _obj, int xn = 0, int yn = 0)
     {
-        x=xn;
-        y=yn;
+        x = xn;
+        y = yn;
         block_level = -1;
         traversed = false;
         isplaceable = _isplaceable;
