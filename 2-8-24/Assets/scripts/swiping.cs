@@ -7,7 +7,8 @@ public class Swiping : MonoBehaviour
     public GameObject grid;
     public float movspeed = 1.5f;
     private Vector2 previousTouchPosition;
-
+    public bool isSwiping;
+    public Tile_Manager tile_Manager;
     private void Start()
     {
         if (camcontroller == null || grid == null)
@@ -15,32 +16,52 @@ public class Swiping : MonoBehaviour
             Debug.LogError("Camcontroller or Grid is not assigned.");
         }
     }
-
-    private void FixedUpdate()
+    private void Update()
     {
         if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
-
-            if (touch.phase == TouchPhase.Began)
+            if (touch.phase == TouchPhase.Ended)
             {
-                previousTouchPosition = touch.position;
+                //ending the swiping event
+                Debug.Log("in touch end");
+                isSwiping = false;
             }
-            else if (touch.phase == TouchPhase.Moved)
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (!tile_Manager.onGrid)
+        {
+            if (Input.touchCount > 0)
             {
-                Vector2 touchDeltaPosition = touch.deltaPosition;
+                Touch touch = Input.GetTouch(0);
 
-                float x = touchDeltaPosition.x;
-                if (x > 0)
+                if (touch.phase == TouchPhase.Began)
                 {
-                    camcontroller.transform.RotateAround(grid.transform.position, Vector3.up, Mathf.Abs(x * movspeed));
+                    Debug.Log("in touch begin");
+                    previousTouchPosition = touch.position;
                 }
-                else if (x < 0)
+                else if (touch.phase == TouchPhase.Moved)
                 {
-                    camcontroller.transform.RotateAround(grid.transform.position, Vector3.down, Mathf.Abs(x * movspeed));
-                }
+                    //beginning the swiping
+                    Debug.Log("in touch move");
+                    isSwiping = true;
+                    Vector2 touchDeltaPosition = touch.deltaPosition;
 
-                previousTouchPosition = touch.position;
+                    float x = touchDeltaPosition.x;
+                    if (x > 0)
+                    {
+                        camcontroller.transform.RotateAround(grid.transform.position, Vector3.up, Mathf.Abs(x * movspeed));
+                    }
+                    else if (x < 0)
+                    {
+                        camcontroller.transform.RotateAround(grid.transform.position, Vector3.down, Mathf.Abs(x * movspeed));
+                    }
+
+                    previousTouchPosition = touch.position;
+                }
             }
         }
     }
