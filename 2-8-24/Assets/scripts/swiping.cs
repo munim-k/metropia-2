@@ -24,7 +24,7 @@ public class Swiping : MonoBehaviour
             if (touch.phase == TouchPhase.Ended)
             {
                 //ending the swiping event
-                Debug.Log("in touch end");
+               // Debug.Log("in touch end");
                 isSwiping = false;
             }
         }
@@ -40,13 +40,13 @@ public class Swiping : MonoBehaviour
 
                 if (touch.phase == TouchPhase.Began)
                 {
-                    Debug.Log("in touch begin");
+                    //Debug.Log("in touch begin");
                     previousTouchPosition = touch.position;
                 }
                 else if (touch.phase == TouchPhase.Moved)
                 {
                     //beginning the swiping
-                    Debug.Log("in touch move");
+                    //Debug.Log("in touch move");
                     isSwiping = true;
                     Vector2 touchDeltaPosition = touch.deltaPosition;
 

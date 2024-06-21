@@ -294,13 +294,10 @@ MonoBehaviour:
   ortoplanelayermask:
     serializedVersion: 2
     m_Bits: 8
-  onMouseprefab: {fileID: 0}
   cube_placement: {fileID: 870323669}
-  tilemouseposition: {x: 0, y: 0, z: 0}
   highest_block_value: 0
-  followMouse: {fileID: 0}
-  xoffset: 0
-  yoffset: -0.4
+  onGrid: 0
+  swiping: {fileID: 1829269464}
   blockRandomizer: {fileID: 1438051714}
 --- !u!4 &801031080
 Transform:
@@ -829,6 +826,8 @@ MonoBehaviour:
   camcontroller: {fileID: 775054608}
   grid: {fileID: 1030527491}
   movspeed: 0.5
+  isSwiping: 0
+  tile_Manager: {fileID: 801031079}
 --- !u!4 &1829269465
 Transform:
   m_ObjectHideFlags: 0

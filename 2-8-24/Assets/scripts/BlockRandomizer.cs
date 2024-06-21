@@ -19,7 +19,6 @@ public class BlockRandomizer : MonoBehaviour
     public block_node GetNextBlock()
     {
         int highestBlock = tileManager.highest_block_value;
-        highestBlock = 5;
         float[] adjustedProbabilities = probabilities;
 
         // Adjust probabilities based on the highest block
@@ -37,11 +36,11 @@ public class BlockRandomizer : MonoBehaviour
         }
         else if (highestBlock >= blocks[1].block_level)
         {
-            adjustedProbabilities = new float[] { 0.6f, 0.4f, 0f, 0f, 0f };
+            adjustedProbabilities = new float[] { 0.7f, 0.3f, 0f, 0f, 0f };
         }
         else
         {
-            adjustedProbabilities = new float[] { 0.7f, 0.3f, 0f, 0f, 0f };
+            adjustedProbabilities = new float[] { 0.8f, 0.2f, 0f, 0f, 0f };
         }
 
         return GetRandomBlock(adjustedProbabilities);

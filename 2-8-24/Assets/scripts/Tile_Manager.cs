@@ -11,13 +11,14 @@ public class Tile_Manager : MonoBehaviour
     public LayerMask ortoplanelayermask;
     private Plane plane;
     private Transform cube;
-    public Transform onMouseprefab;
+    private Transform onMouseprefab;
     public GameObject cube_placement;
     private Vector3 mousePosition;
-    public Vector3 tilemouseposition;
-    public int highest_block_value = 5;
+    private Vector3 tilemouseposition;
+    public int highest_block_value;
     public bool onGrid = false;
     public Swiping swiping;
+    private block_node nextBlock;
     private Vector2[,] arrayyy =
     {
         { new Vector2(0, -4), new Vector2(0, -3), new Vector2(0, -2), new Vector2(0, -1), new Vector2(0, 0) },
@@ -26,11 +27,8 @@ public class Tile_Manager : MonoBehaviour
         { new Vector2(3, -4), new Vector2(3, -3), new Vector2(3, -2), new Vector2(3, -1), new Vector2(3, 0) },
         { new Vector2(4, -4), new Vector2(4, -3), new Vector2(4, -2), new Vector2(4, -1), new Vector2(4, 0) }
     };
-
-
-    public FollowMouse followMouse;
-    public float xoffset;
-    public float yoffset;
+    private float xoffset=0f;
+    private float yoffset=-0.4f;
     private Vector2 returnindex(Vector2 tile_index)
     {
         if (tile_index.x < 0 || tile_index.y < 0 || tile_index.x > 4 || tile_index.y > 4)
@@ -41,6 +39,7 @@ public class Tile_Manager : MonoBehaviour
     }
 
     public BlockRandomizer blockRandomizer;
+
     void getMousePositionOnGrid()
     {
         if (Input.GetButtonDown("Fire1") || Input.GetButton("Fire1"))
@@ -52,7 +51,7 @@ public class Tile_Manager : MonoBehaviour
             if (Physics.Raycast(ray, out hit, float.MaxValue, ortoplanelayermask))
             {
                 onGrid = true;
-                Debug.Log("onGrid: true");
+              //  Debug.Log("onGrid: true");
                 if (!swiping.isSwiping)
                 {
                     tilemouseposition = hit.transform.position;
@@ -69,14 +68,16 @@ public class Tile_Manager : MonoBehaviour
                         {
                             break;
                         }
-                        else if (tilemouseposition.x == tile_index.x && tilemouseposition.z == tile_index.y && node.isplaceable)
+                        else if (tilemouseposition.x == tile_index.x && tilemouseposition.z == tile_index.y &&
+                                 node.isplaceable)
                         {
                             if (onMouseprefab)
                             {
-                                node.block_level = 1;
+                                node.block_level = nextBlock.block_level;
                                 BFS(node);
                                 node.isplaceable = false;
-                                onMouseprefab.position = new Vector3(tile_index.x + xoffset, 0.84f, tile_index.y + yoffset);
+                                onMouseprefab.position =
+                                    new Vector3(tile_index.x + xoffset, 0.84f, tile_index.y + yoffset);
                                 onMouseprefab = null;
                                 break;
                             }
@@ -87,12 +88,23 @@ public class Tile_Manager : MonoBehaviour
             else
             {
                 onGrid = false;
-                Debug.Log("onGrid: false");
+                //Debug.Log("onGrid: false");
             }
         }
-
-
     }
+
+    int getHighestBlock()
+    {
+        int max = 0;
+            foreach (var node in nodes)
+            {
+                if (node.block_level > max)
+                {   max = node.block_level;}
+            }
+
+            return max;
+    }
+    
     int BFS(Node node)
     {
         Queue<Node> Q = new Queue<Node>();
@@ -210,7 +222,8 @@ public class Tile_Manager : MonoBehaviour
     {
         if (!onMouseprefab)
         {
-            block_node nextBlock = blockRandomizer.GetNextBlock();
+            highest_block_value = getHighestBlock();
+            nextBlock = blockRandomizer.GetNextBlock();
 
             GameObject nextBlockObject = nextBlock.block;
             // cube = nextBlockObject.transform;
