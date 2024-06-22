@@ -2,6 +2,8 @@ using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Properties;
+
 public class Tile_Manager : MonoBehaviour
 {
     [SerializeField] public GameObject tiles;
@@ -18,6 +20,7 @@ public class Tile_Manager : MonoBehaviour
     public int highest_block_value;
     public bool onGrid = false;
     public Swiping swiping;
+    private GameObject PrefabInstance;
     private block_node nextBlock;
     private Vector2[,] arrayyy =
     {
@@ -48,12 +51,10 @@ public class Tile_Manager : MonoBehaviour
             mousePosition = touch.position;
             Ray ray = Camera.main.ScreenPointToRay(mousePosition);
             RaycastHit hit;
-            if (Physics.Raycast(ray, out hit, float.MaxValue, ortoplanelayermask))
+            if (Physics.Raycast(ray, out hit, float.MaxValue, ortoplanelayermask)&&!swiping.isSwiping)
             {
                 onGrid = true;
               //  Debug.Log("onGrid: true");
-                if (!swiping.isSwiping)
-                {
                     tilemouseposition = hit.transform.position;
                     tilemouseposition.x = Mathf.RoundToInt(tilemouseposition.x);
                     tilemouseposition.y = Mathf.RoundToInt(tilemouseposition.y);
@@ -73,17 +74,34 @@ public class Tile_Manager : MonoBehaviour
                         {
                             if (onMouseprefab)
                             {
+                                node.BlockObject = PrefabInstance;
                                 node.block_level = nextBlock.block_level;
-                                BFS(node);
+                                
                                 node.isplaceable = false;
                                 onMouseprefab.position =
                                     new Vector3(tile_index.x + xoffset, 0.84f, tile_index.y + yoffset);
+                                bool IsMatchLoop= BFS(node);
+                                while (IsMatchLoop)
+                                {
+                                    if (node.isplaceable == true)
+                                    {
+                                        nextBlock = blockRandomizer.GetHigherBlock(nextBlock);
+                                        GameObject nextBlockObject = nextBlock.block;
+                                        PrefabInstance = Instantiate(nextBlockObject, onMouseprefab.position,
+                                            Quaternion.identity);
+                                        node.isplaceable = false;
+                                        node.BlockObject = PrefabInstance;
+                                        node.block_level = nextBlock.block_level;
+                                    }
+
+                                    IsMatchLoop = BFS(node);
+                                }
+
                                 onMouseprefab = null;
                                 break;
                             }
                         }
                     }
-                }
             }
             else
             {
@@ -104,8 +122,11 @@ public class Tile_Manager : MonoBehaviour
 
             return max;
     }
-    
-    int BFS(Node node)
+    bool compareNodes(Node A, Node B)
+    {
+        return (A.discTime < B.discTime);
+    }
+    bool BFS(Node node)
     {
         Queue<Node> Q = new Queue<Node>();
         List<Node> markedNodes = new List<Node>();
@@ -121,7 +142,7 @@ public class Tile_Manager : MonoBehaviour
         while (!(Q.Count == 0))
         {
             current = Q.Dequeue();
-            current.obj.GetComponent<Renderer>().material.color = Color.red;
+          //  current.obj.GetComponent<Renderer>().material.color = Color.red;
             current.discTime = time;
             current.traversed = true;
 
@@ -133,6 +154,7 @@ public class Tile_Manager : MonoBehaviour
                     {
                         nodes[current.x, current.y - 1].parent.x = current.x;
                         nodes[current.x, current.y - 1].parent.y = current.y;
+
                         markedNodes.Add(nodes[current.x, current.y - 1]);
                         Q.Enqueue(nodes[current.x, current.y - 1]);
                     }
@@ -186,25 +208,53 @@ public class Tile_Manager : MonoBehaviour
             time++;
             n++;
         }
+
+        markedNodes = FilterDuplicates(markedNodes);
         for (int i = 0; i < markedNodes.Count; i++)
         {
             markedNodes[i].traversed = false;
+            //Debug.Log(markedNodes[i].x + " and " + markedNodes[i].y);
+            //Debug.Log(markedNodes[i].x + " and " + markedNodes[i].y + " has parent " + markedNodes[i].parent.x + " and " + markedNodes[i].parent.y);
+            //Debug.Log(markedNodes[i].x + " and " + markedNodes[i].y + " has time " + markedNodes[i].discTime);
         }
-        return UniqueNodeCounter.CountUniqueNodes(markedNodes);
-    }
-    public class UniqueNodeCounter
-    {
-        public static int CountUniqueNodes(List<Node> markedNodes)
+
+        if (markedNodes.Count >= 3)
         {
-            HashSet<(int, int)> uniqueCoordinates = new HashSet<(int, int)>();
-
-            foreach (Node node in markedNodes)
-            {
-                uniqueCoordinates.Add((node.x, node.y));
-            }
-
-            return uniqueCoordinates.Count;
+            //Debug.Log(markedNodes.Count);
+            combineBlocks(markedNodes,node);
+            return true;
         }
+
+        return false;
+    }
+
+    void combineBlocks(List<Node> markedNodes, Node current)
+    {
+       // markedNodes.Sort((A, B) => B.discTime.CompareTo(A.discTime));
+        foreach (var node in markedNodes)
+        {
+            node.block_level = 0;
+            node.isplaceable = true;
+            node.traversed = false;
+           //node.obj.GetComponent<Renderer>().material.color = Color.yellow;
+            Destroy(node.BlockObject);
+            node.BlockObject = null;
+        }
+        
+    }
+    
+    List<Node> FilterDuplicates(List<Node> markedNodes) //changed this function to return markedNodes wihout duplicates
+    {
+        HashSet<(int, int)> uniqueCoordinates = new HashSet<(int, int)>();
+        List<Node> temp = new List<Node>();
+        foreach (Node node in markedNodes)
+        {
+            if (uniqueCoordinates.Add((node.x, node.y)))
+            {
+                temp.Add(node);
+            }
+        }
+        return temp;
     }
     private void Start()
     {
@@ -227,7 +277,8 @@ public class Tile_Manager : MonoBehaviour
 
             GameObject nextBlockObject = nextBlock.block;
             // cube = nextBlockObject.transform;
-            onMouseprefab = Instantiate(nextBlockObject.transform, cube_placement.transform.position, Quaternion.identity);
+            PrefabInstance = Instantiate(nextBlockObject, cube_placement.transform.position, Quaternion.identity);
+            onMouseprefab = PrefabInstance.transform;
         }
         getMousePositionOnGrid();
         if (onMouseprefab)
@@ -296,6 +347,7 @@ public class Node                     //class for each block
     public bool isplaceable;
     public Vector3 cellposition;
     public Vector2Int parent;
+    public GameObject BlockObject;
     public int discTime;
     public Transform obj;
     public bool traversed;
@@ -312,4 +364,7 @@ public class Node                     //class for each block
         cellposition = _cellposition;
         obj = _obj;
     }
+
+    
 };
+

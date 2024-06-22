@@ -46,6 +46,11 @@ public class BlockRandomizer : MonoBehaviour
         return GetRandomBlock(adjustedProbabilities);
     }
 
+    public block_node GetHigherBlock(block_node block)
+    {
+        int level = block.block_level;
+        return blocks[level];
+    }
     private block_node GetRandomBlock(float[] adjustedProbabilities)
     {
         float total = 0;
