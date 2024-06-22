@@ -7,7 +7,7 @@ public class Swiping : MonoBehaviour
     public GameObject grid;
     public float movspeed = 1.5f;
     private Vector2 previousTouchPosition;
-    public bool isSwiping;
+    public bool isSwiping;      //for smoother experience
     public Tile_Manager tile_Manager;
     private void Start()
     {
@@ -24,7 +24,7 @@ public class Swiping : MonoBehaviour
             if (touch.phase == TouchPhase.Ended)
             {
                 //ending the swiping event
-               // Debug.Log("in touch end");
+               
                 isSwiping = false;
             }
         }
@@ -40,13 +40,11 @@ public class Swiping : MonoBehaviour
 
                 if (touch.phase == TouchPhase.Began)
                 {
-                    //Debug.Log("in touch begin");
                     previousTouchPosition = touch.position;
                 }
                 else if (touch.phase == TouchPhase.Moved)
                 {
                     //beginning the swiping
-                    //Debug.Log("in touch move");
                     isSwiping = true;
                     Vector2 touchDeltaPosition = touch.deltaPosition;
 

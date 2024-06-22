@@ -7,7 +7,7 @@ public class MoveObjects : MonoBehaviour {
     public Camera cam;
 
     private Vector3 dis;
-    private float posX;
+    private float posX;     //position in 3d Space
     private float posY;
     private float posZ;
     private bool touched = false;

@@ -1,5 +1,5 @@
 using UnityEngine;
-
+//decides which level block will appear next to the users
 public class BlockRandomizer : MonoBehaviour
 {
     public GameObject[] block_objects;

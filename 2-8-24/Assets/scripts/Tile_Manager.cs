@@ -9,20 +9,20 @@ public class Tile_Manager : MonoBehaviour
     [SerializeField] public GameObject tiles;
     [SerializeField] public Transform parent;
     public int height, width;
-    private Node[,] nodes;
+    private Node[,] nodes; //2D matrix which forms the backend
     public LayerMask ortoplanelayermask;
     private Plane plane;
     private Transform cube;
     private Transform onMouseprefab;
     public GameObject cube_placement;
-    private Vector3 mousePosition;
+    private Vector3 mousePosition;          //unnecessary
     private Vector3 tilemouseposition;
-    public int highest_block_value;
-    public bool onGrid = false;
+    public int highest_block_value;     //the block with the highest level on the board
+    public bool onGrid = false;         //used for smooth swiping
     public Swiping swiping;
     private GameObject PrefabInstance;
-    private block_node nextBlock;
-    private Vector2[,] arrayyy =
+    private block_node nextBlock;       //contains the block level of the block which the user has currently selected
+    private Vector2[,] arrayyy =        //contains predefined values which return correct index of block on tile
     {
         { new Vector2(0, -4), new Vector2(0, -3), new Vector2(0, -2), new Vector2(0, -1), new Vector2(0, 0) },
         { new Vector2(1, -4), new Vector2(1, -3), new Vector2(1, -2), new Vector2(1, -1), new Vector2(1, 0) },
@@ -32,7 +32,7 @@ public class Tile_Manager : MonoBehaviour
     };
     private float xoffset=0f;
     private float yoffset=-0.4f;
-    private Vector2 returnindex(Vector2 tile_index)
+    private Vector2 returnindex(Vector2 tile_index)     //return predefined values which return correct index of block on tile
     {
         if (tile_index.x < 0 || tile_index.y < 0 || tile_index.x > 4 || tile_index.y > 4)
         {
@@ -49,9 +49,9 @@ public class Tile_Manager : MonoBehaviour
         {
             Touch touch = Input.touches[0];
             mousePosition = touch.position;
-            Ray ray = Camera.main.ScreenPointToRay(mousePosition);
+            Ray ray = Camera.main.ScreenPointToRay(mousePosition); //unnecessary
             RaycastHit hit;
-            if (Physics.Raycast(ray, out hit, float.MaxValue, ortoplanelayermask)&&!swiping.isSwiping)
+            if (Physics.Raycast(ray, out hit, float.MaxValue, ortoplanelayermask)&&!swiping.isSwiping)  //if a touch occurs on top of board
             {
                 onGrid = true;
               //  Debug.Log("onGrid: true");
@@ -72,7 +72,7 @@ public class Tile_Manager : MonoBehaviour
                         else if (tilemouseposition.x == tile_index.x && tilemouseposition.z == tile_index.y &&
                                  node.isplaceable)
                         {
-                            if (onMouseprefab)
+                            if (onMouseprefab)  //will create a new block on top of the pressed postion assign it values from nextBlock and then run BFS
                             {
                                 node.BlockObject = PrefabInstance;
                                 node.block_level = nextBlock.block_level;
@@ -111,7 +111,7 @@ public class Tile_Manager : MonoBehaviour
         }
     }
 
-    int getHighestBlock()
+    int getHighestBlock() //returns max node level
     {
         int max = 0;
             foreach (var node in nodes)
@@ -139,16 +139,15 @@ public class Tile_Manager : MonoBehaviour
         Node current = null;
         int n = 0;
 
-        while (!(Q.Count == 0))
+        while (!(Q.Count == 0))//until queue is not empty
         {
             current = Q.Dequeue();
-          //  current.obj.GetComponent<Renderer>().material.color = Color.red;
             current.discTime = time;
             current.traversed = true;
 
             if (current.y > 0)
             {
-                if (nodes[current.x, current.y - 1].block_level == nodes[current.x, current.y].block_level) //left
+                if (nodes[current.x, current.y - 1].block_level == nodes[current.x, current.y].block_level) //check left
                 {
                     if (!nodes[current.x, current.y - 1].traversed)
                     {
@@ -163,7 +162,7 @@ public class Tile_Manager : MonoBehaviour
 
             if (current.y < 4)
             {
-                if (nodes[current.x, current.y + 1].block_level == nodes[current.x, current.y].block_level) //right
+                if (nodes[current.x, current.y + 1].block_level == nodes[current.x, current.y].block_level) //check right
                 {
                     if (!nodes[current.x, current.y + 1].traversed)
                     {
@@ -178,7 +177,7 @@ public class Tile_Manager : MonoBehaviour
 
             if (current.x < 4)
             {
-                if (nodes[current.x + 1, current.y].block_level == nodes[current.x, current.y].block_level) //bottom
+                if (nodes[current.x + 1, current.y].block_level == nodes[current.x, current.y].block_level) //check bottom
                 {
                     if (!nodes[current.x + 1, current.y].traversed)
                     {
@@ -193,7 +192,7 @@ public class Tile_Manager : MonoBehaviour
 
             if (current.x > 0)
             {
-                if (nodes[current.x - 1, current.y].block_level == nodes[current.x, current.y].block_level) //top
+                if (nodes[current.x - 1, current.y].block_level == nodes[current.x, current.y].block_level) //check top
                 {
                     if (!nodes[current.x - 1, current.y].traversed)
                     {
@@ -209,18 +208,14 @@ public class Tile_Manager : MonoBehaviour
             n++;
         }
 
-        markedNodes = FilterDuplicates(markedNodes);
+        markedNodes = FilterDuplicates(markedNodes);    //removes duplicates
         for (int i = 0; i < markedNodes.Count; i++)
         {
-            markedNodes[i].traversed = false;
-            //Debug.Log(markedNodes[i].x + " and " + markedNodes[i].y);
-            //Debug.Log(markedNodes[i].x + " and " + markedNodes[i].y + " has parent " + markedNodes[i].parent.x + " and " + markedNodes[i].parent.y);
-            //Debug.Log(markedNodes[i].x + " and " + markedNodes[i].y + " has time " + markedNodes[i].discTime);
+            markedNodes[i].traversed = false;           //turn them back to false so next run is not affected
         }
 
         if (markedNodes.Count >= 3)
         {
-            //Debug.Log(markedNodes.Count);
             combineBlocks(markedNodes,node);
             return true;
         }
@@ -228,15 +223,13 @@ public class Tile_Manager : MonoBehaviour
         return false;
     }
 
-    void combineBlocks(List<Node> markedNodes, Node current)
+    void combineBlocks(List<Node> markedNodes, Node current)//Destroys blocks and combine them into a single block with increased level
     {
-       // markedNodes.Sort((A, B) => B.discTime.CompareTo(A.discTime));
         foreach (var node in markedNodes)
         {
             node.block_level = 0;
             node.isplaceable = true;
             node.traversed = false;
-           //node.obj.GetComponent<Renderer>().material.color = Color.yellow;
             Destroy(node.BlockObject);
             node.BlockObject = null;
         }
@@ -262,13 +255,12 @@ public class Tile_Manager : MonoBehaviour
         {
             blockRandomizer = FindObjectOfType<BlockRandomizer>();
         }
-        //        Debug.Log(blockRandomizer.blocks[0].block_level);
         createGrid();
         plane = new Plane(Vector3.up, transform.position);
 
     }
 
-    private void Update()
+    private void Update()   //unnecessary not referenced anywhere
     {
         if (!onMouseprefab)
         {
@@ -344,15 +336,15 @@ public class Tile_Manager : MonoBehaviour
 
 public class Node                     //class for each block
 {
-    public bool isplaceable;
+    public bool isplaceable;    //flag to check if it is possible to place a block 
     public Vector3 cellposition;
-    public Vector2Int parent;
+    public Vector2Int parent;   //tells form which node does the destroy function initiate from(used for animation)
     public GameObject BlockObject;
-    public int discTime;
+    public int discTime;        //the time taken to find this particular node when BFS is called
     public Transform obj;
-    public bool traversed;
-    public int block_level;
-    public int x;
+    public bool traversed;      
+    public int block_level;     //current level of the node
+    public int x;               //position in the array 'nodes'
     public int y;
     public Node(bool _isplaceable, Vector3 _cellposition, Transform _obj, int xn = 0, int yn = 0)
     {
